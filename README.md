@@ -172,7 +172,7 @@ func main(){
 ```
 
 ### 目前已实现的driver
-* [控制台](dirver/console) 带颜色的控制台输出(windows暂时无色)
+* [控制台](driver/console) 带颜色的控制台输出(windows暂时无色)
 * [文件](driver/file) 支持文件分割
 * [网络](driver/net) 目前仅实现了通过http发送日志的功能并且高度自定义
 
