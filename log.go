@@ -142,6 +142,17 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error
 		return nil
 	}
 
+	if level == FATAL {
+		// 追加调用堆栈
+		for i := calldept; i < calldept+5; i++ {
+			_, file, line, ok := runtime.Caller(i)
+			if !ok {
+				break
+			}
+			msg += fmt.Sprintf("\n%s:%d", file, line)
+		}
+	}
+
 	// 从对象池中取出一个style对象并赋值
 	ev := eventObjPool.Get().(*Event)
 	ev.Timestamp = time.Now().Format(TimestampLayout)
@@ -171,7 +182,7 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error
 		// Write 方法不要堵塞会
 		// 如何高性能杜绝或防止这里堵塞呢？todo
 		o.lockCall(func() {
-			_, err = out.Write(out.Format(ev))
+			out.Write(out.Format(ev))
 		})
 		if err != nil {
 			continue
@@ -184,23 +195,23 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error
 
 // Debug
 func (o *Logger) Debug(s ...interface{}) {
-	o.Output(2, DEBUG, "", "", fmt.Sprint(s...))
+	o.Output(2, DEBUG, "", "", fmt.Sprintln(s...))
 }
 
 func (o *Logger) Info(s ...interface{}) {
-	o.Output(2, INFO, "", "", fmt.Sprint(s...))
+	o.Output(2, INFO, "", "", fmt.Sprintln(s...))
 }
 
 func (o *Logger) Warn(s ...interface{}) {
-	o.Output(2, WARN, "", "", fmt.Sprint(s...))
+	o.Output(2, WARN, "", "", fmt.Sprintln(s...))
 }
 
 func (o *Logger) Error(s ...interface{}) {
-	o.Output(2, ERROR, "", "", fmt.Sprint(s...))
+	o.Output(2, ERROR, "", "", fmt.Sprintln(s...))
 }
 
 func (o *Logger) Fatal(s ...interface{}) {
-	o.Output(2, FATAL, "", "", fmt.Sprint(s...))
+	o.Output(2, FATAL, "", "", fmt.Sprintln(s...))
 }
 
 // Ctx 携带日志id和事件名的日志对象
@@ -233,26 +244,26 @@ func (ctx *Ctx) Free() {
 }
 
 func (ctx *Ctx) Debug(s ...interface{}) *Ctx {
-	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprintln(s...))
 	return ctx
 }
 
 func (ctx *Ctx) Info(s ...interface{}) *Ctx {
-	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprintln(s...))
 	return ctx
 }
 
 func (ctx *Ctx) Warn(s ...interface{}) *Ctx {
-	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprintln(s...))
 	return ctx
 }
 
 func (ctx *Ctx) Error(s ...interface{}) *Ctx {
-	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprintln(s...))
 	return ctx
 }
 
 func (ctx *Ctx) Fatal(s ...interface{}) *Ctx {
-	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprintln(s...))
 	return ctx
 }
