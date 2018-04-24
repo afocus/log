@@ -108,7 +108,7 @@ DEBUG | 指明细致的事件信息，对调试应用最有用
 INFO | 指明描述信息，从粗粒度上描述了应用运行过程
 WARN | 指明潜在的有害状况
 ERROR | 指明错误事件，但应用可能还能继续运行
-FATAL | 指明非常严重的错误事件，可能会导致应用终止执行
+FATAL | 指明非常严重的错误事件，可能会导致应用终止执行 (自带调用堆栈信息)
 OFF | 最高级别，用于关闭日志
 
 ### 输出方法
@@ -118,8 +118,11 @@ OFF | 最高级别，用于关闭日志
 * `Warn(v ...interface{})`
 * `Error(v ...interface{})`
 * `Fatal(v ...interface{})`
-
-
+* `Debugf(s string, v ...interface{})`
+* `Infof(s string, v ...interface{})`
+* `Warnf(s string, v ...interface{})`
+* `Errorf(s string, v ...interface{})`
+* `Fatalf(s string, v ...interface{})`
 
 
 

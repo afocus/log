@@ -195,23 +195,45 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error
 
 // Debug
 func (o *Logger) Debug(s ...interface{}) {
-	o.Output(2, DEBUG, "", "", fmt.Sprintln(s...))
+	o.Output(2, DEBUG, "", "", fmt.Sprint(s...))
 }
 
 func (o *Logger) Info(s ...interface{}) {
-	o.Output(2, INFO, "", "", fmt.Sprintln(s...))
+	o.Output(2, INFO, "", "", fmt.Sprint(s...))
 }
 
 func (o *Logger) Warn(s ...interface{}) {
-	o.Output(2, WARN, "", "", fmt.Sprintln(s...))
+	o.Output(2, WARN, "", "", fmt.Sprint(s...))
 }
 
 func (o *Logger) Error(s ...interface{}) {
-	o.Output(2, ERROR, "", "", fmt.Sprintln(s...))
+	o.Output(2, ERROR, "", "", fmt.Sprint(s...))
 }
 
 func (o *Logger) Fatal(s ...interface{}) {
-	o.Output(2, FATAL, "", "", fmt.Sprintln(s...))
+	o.Output(2, FATAL, "", "", fmt.Sprint(s...))
+}
+
+// format
+
+func (o *Logger) Debugf(s string, args ...interface{}) {
+	o.Output(2, DEBUG, "", "", fmt.Sprintf(s, args...))
+}
+
+func (o *Logger) Infof(s string, args ...interface{}) {
+	o.Output(2, INFO, "", "", fmt.Sprintf(s, args...))
+}
+
+func (o *Logger) Warnf(s string, args ...interface{}) {
+	o.Output(2, WARN, "", "", fmt.Sprintf(s, args...))
+}
+
+func (o *Logger) Errorf(s string, args ...interface{}) {
+	o.Output(2, ERROR, "", "", fmt.Sprintf(s, args...))
+}
+
+func (o *Logger) Fatalf(s string, args ...interface{}) {
+	o.Output(2, FATAL, "", "", fmt.Sprintf(s, args...))
 }
 
 // Ctx 携带日志id和事件名的日志对象
@@ -244,26 +266,52 @@ func (ctx *Ctx) Free() {
 }
 
 func (ctx *Ctx) Debug(s ...interface{}) *Ctx {
-	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprintln(s...))
+	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprint(s...))
 	return ctx
 }
 
 func (ctx *Ctx) Info(s ...interface{}) *Ctx {
-	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprintln(s...))
+	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprint(s...))
 	return ctx
 }
 
 func (ctx *Ctx) Warn(s ...interface{}) *Ctx {
-	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprintln(s...))
+	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprint(s...))
 	return ctx
 }
 
 func (ctx *Ctx) Error(s ...interface{}) *Ctx {
-	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprintln(s...))
+	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprint(s...))
 	return ctx
 }
 
 func (ctx *Ctx) Fatal(s ...interface{}) *Ctx {
-	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprintln(s...))
+	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprint(s...))
+	return ctx
+}
+
+//
+func (ctx *Ctx) Debugf(s string, args ...interface{}) *Ctx {
+	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	return ctx
+}
+
+func (ctx *Ctx) Infof(s string, args ...interface{}) *Ctx {
+	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	return ctx
+}
+
+func (ctx *Ctx) Warnf(s string, args ...interface{}) *Ctx {
+	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	return ctx
+}
+
+func (ctx *Ctx) Errorf(s string, args ...interface{}) *Ctx {
+	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	return ctx
+}
+
+func (ctx *Ctx) Fatalf(s string, args ...interface{}) *Ctx {
+	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
 	return ctx
 }
