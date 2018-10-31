@@ -85,19 +85,19 @@ type FormatWriter interface {
 // 可以通过Formater接口输入格式化样式后的数据
 type Event struct {
 	// 日志产生时的时间
-	Timestamp string
+	Timestamp string `json:"timestamp"`
 	// 日志等级
-	Level Level
+	Level Level `json:"level"`
 	// 所在文件行数file:line
 	// main:20
-	File string
+	File string `json:"file,omitempty"`
 	// 日志id 只有Ctx方式才会使用
 	// 主要用于上下文关联
-	ID string
+	ID string `json:"logid,omitempty"`
 	// 日志动作名称 描述干什么的 如 login,callback...
-	Action string
+	Action string `json:"action,omitempty"`
 	// 日志内容
-	Message string
+	Message string `json:"message"`
 }
 
 // CreateID 简单的返回一个随机字符串id
