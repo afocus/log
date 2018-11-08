@@ -2,7 +2,6 @@ package console
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 
@@ -42,10 +41,7 @@ func (c *Console) Format(ev *log.Event) []byte {
 		return c.toJSON(ev)
 	}
 	var theme *color.Theme
-	data := fmt.Sprintf(
-		"[%s] %s %s %s-%s → %s\n",
-		ev.Timestamp, ev.Level, ev.File, ev.ID, ev.Action, ev.Message,
-	)
+	data := string(log.FormatPattern(ev))
 	switch ev.Level {
 	case log.FATAL:
 		theme = color.Error

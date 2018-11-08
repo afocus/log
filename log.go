@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -59,8 +60,8 @@ var TimestampLayout = "2006-01-02 15:04:05"
 // FormatPattern 扁平化格式化日志事件
 var FormatPattern = func(ev *Event) []byte {
 	data := fmt.Sprintf(
-		"%s [%s] %s %s-%s → %s",
-		ev.Timestamp, ev.Level, ev.File, ev.ID, ev.Action, ev.Message,
+		"%s[%s] %s %s %s (%s) → %s",
+		ev.SrvName, ev.Timestamp, ev.Level, ev.Action, ev.File, ev.ID, ev.Message,
 	)
 	d := []byte(data)
 	if length := len(d); d[length-1] == '\n' {
@@ -84,6 +85,7 @@ type FormatWriter interface {
 // Event 日志事件 记录了日志的必要信息
 // 可以通过Formater接口输入格式化样式后的数据
 type Event struct {
+	SrvName string `json:"srvname"`
 	// 日志产生时的时间
 	Timestamp string `json:"timestamp"`
 	// 日志等级
@@ -109,6 +111,7 @@ func CreateID() string {
 
 // Logger 日志对象
 type Logger struct {
+	srvname string
 	// 用于并发安全的锁
 	mu sync.Mutex
 	// 实现FormatWriter接口的输出对象
@@ -121,8 +124,9 @@ type Logger struct {
 
 func New(lvl Level, outs ...FormatWriter) *Logger {
 	return &Logger{
-		outs: outs,
-		lvl:  lvl,
+		srvname: os.Args[0],
+		outs:    outs,
+		lvl:     lvl,
 	}
 }
 
@@ -155,6 +159,7 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error
 
 	// 从对象池中取出一个style对象并赋值
 	ev := eventObjPool.Get().(*Event)
+	ev.SrvName = o.srvname
 	ev.Timestamp = time.Now().Format(TimestampLayout)
 	ev.ID = id
 	ev.Level = level
@@ -191,6 +196,12 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error
 	// 放入对象池中
 	eventObjPool.Put(ev)
 	return err
+}
+
+func (o *Logger) SetSrvName(s string) {
+	o.lockCall(func() {
+		o.srvname = s
+	})
 }
 
 // Debug
