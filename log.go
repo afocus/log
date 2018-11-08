@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
@@ -60,7 +61,7 @@ var TimestampLayout = "2006-01-02 15:04:05"
 // FormatPattern 扁平化格式化日志事件
 var FormatPattern = func(ev *Event) []byte {
 	data := fmt.Sprintf(
-		"%s[%s] %s %s %s (%s) → %s",
+		"%s [%s] %s %s %s (%s) → %s",
 		ev.SrvName, ev.Timestamp, ev.Level, ev.Action, ev.File, ev.ID, ev.Message,
 	)
 	d := []byte(data)
@@ -124,7 +125,7 @@ type Logger struct {
 
 func New(lvl Level, outs ...FormatWriter) *Logger {
 	return &Logger{
-		srvname: os.Args[0],
+		srvname: filepath.Base(os.Args[0]),
 		outs:    outs,
 		lvl:     lvl,
 	}
