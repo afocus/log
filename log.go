@@ -139,6 +139,18 @@ func (o *Logger) lockCall(f func()) {
 
 var eventObjPool = &sync.Pool{New: func() interface{} { return new(Event) }}
 
+func (o *Logger) Write(b []byte) (int, error) {
+	// 保证并发安全
+	var err error
+	var n int
+	for _, out := range o.outs {
+		// Write 方法不要堵塞会
+		// 如何高性能杜绝或防止这里堵塞呢？todo
+		o.lockCall(func() { n, err = out.Write(b) })
+	}
+	return n, err
+}
+
 // Output 输出日志消息
 // 核心方法 所有日志输出全部以及此方法
 func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error {
@@ -190,9 +202,6 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error
 		o.lockCall(func() {
 			out.Write(out.Format(ev))
 		})
-		if err != nil {
-			continue
-		}
 	}
 	// 放入对象池中
 	eventObjPool.Put(ev)
