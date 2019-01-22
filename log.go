@@ -2,6 +2,7 @@ package log
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -60,15 +61,23 @@ var TimestampLayout = "2006-01-02 15:04:05"
 
 // FormatPattern 扁平化格式化日志事件
 var FormatPattern = func(ev *Event) []byte {
-	data := fmt.Sprintf(
-		"%s [%s] %s %s %s (%s) → %s",
-		ev.SrvName, ev.Timestamp, ev.Level, ev.Action, ev.File, ev.ID, ev.Message,
-	)
-	d := []byte(data)
-	if length := len(d); d[length-1] == '\n' {
-		return d
+	var pre string
+	if ev.Action != "" || ev.ID != "" {
+		pre = fmt.Sprintf("[%s] %s %s (%s#%s)-> ", ev.Timestamp, ev.Level, ev.File, ev.Action, ev.ID)
+	} else {
+		pre = fmt.Sprintf("[%s] %s %s-> ", ev.Timestamp, ev.Level, ev.File)
 	}
-	return append(d, '\n')
+	d := []byte(pre + ev.Message)
+	if length := len(d); d[length-1] != '\n' {
+		d = append(d, '\n')
+	}
+	if ev.Data != nil {
+		d = append(d, "fields-> "...)
+		databytes, _ := json.MarshalIndent(ev.Data, "", "  ")
+		d = append(d, databytes...)
+		d = append(d, '\n')
+	}
+	return d
 }
 
 // Formater 格式化日志事件到字符串
@@ -101,6 +110,8 @@ type Event struct {
 	Action string `json:"action,omitempty"`
 	// 日志内容
 	Message string `json:"message"`
+	// data
+	Data interface{} `json:"data,omitempty"`
 }
 
 // CreateID 简单的返回一个随机字符串id
@@ -153,7 +164,7 @@ func (o *Logger) Write(b []byte) (int, error) {
 
 // Output 输出日志消息
 // 核心方法 所有日志输出全部以及此方法
-func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error {
+func (o *Logger) Output(calldept int, level Level, acname, id, msg string, data interface{}) error {
 	// 等级不足以输出
 	if o.lvl > level {
 		return nil
@@ -178,6 +189,7 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string) error
 	ev.Level = level
 	ev.Action = acname
 	ev.Message = msg
+	ev.Data = data
 
 	// 获取所在文件以及行数
 	_, file, line, ok := runtime.Caller(calldept)
@@ -216,51 +228,52 @@ func (o *Logger) SetSrvName(s string) {
 
 // Debug
 func (o *Logger) Debug(s ...interface{}) {
-	o.Output(2, DEBUG, "", "", fmt.Sprint(s...))
+	o.Output(2, DEBUG, "", "", fmt.Sprint(s...), nil)
 }
 
 func (o *Logger) Info(s ...interface{}) {
-	o.Output(2, INFO, "", "", fmt.Sprint(s...))
+	o.Output(2, INFO, "", "", fmt.Sprint(s...), nil)
 }
 
 func (o *Logger) Warn(s ...interface{}) {
-	o.Output(2, WARN, "", "", fmt.Sprint(s...))
+	o.Output(2, WARN, "", "", fmt.Sprint(s...), nil)
 }
 
 func (o *Logger) Error(s ...interface{}) {
-	o.Output(2, ERROR, "", "", fmt.Sprint(s...))
+	o.Output(2, ERROR, "", "", fmt.Sprint(s...), nil)
 }
 
 func (o *Logger) Fatal(s ...interface{}) {
-	o.Output(2, FATAL, "", "", fmt.Sprint(s...))
+	o.Output(2, FATAL, "", "", fmt.Sprint(s...), nil)
 }
 
 // format
 
 func (o *Logger) Debugf(s string, args ...interface{}) {
-	o.Output(2, DEBUG, "", "", fmt.Sprintf(s, args...))
+	o.Output(2, DEBUG, "", "", fmt.Sprintf(s, args...), nil)
 }
 
 func (o *Logger) Infof(s string, args ...interface{}) {
-	o.Output(2, INFO, "", "", fmt.Sprintf(s, args...))
+	o.Output(2, INFO, "", "", fmt.Sprintf(s, args...), nil)
 }
 
 func (o *Logger) Warnf(s string, args ...interface{}) {
-	o.Output(2, WARN, "", "", fmt.Sprintf(s, args...))
+	o.Output(2, WARN, "", "", fmt.Sprintf(s, args...), nil)
 }
 
 func (o *Logger) Errorf(s string, args ...interface{}) {
-	o.Output(2, ERROR, "", "", fmt.Sprintf(s, args...))
+	o.Output(2, ERROR, "", "", fmt.Sprintf(s, args...), nil)
 }
 
 func (o *Logger) Fatalf(s string, args ...interface{}) {
-	o.Output(2, FATAL, "", "", fmt.Sprintf(s, args...))
+	o.Output(2, FATAL, "", "", fmt.Sprintf(s, args...), nil)
 }
 
 // Ctx 携带日志id和事件名的日志对象
 // 主要用于通过id串联一些日志 起到查询方便
 type Ctx struct {
 	o       *Logger
+	data    interface{}
 	id, tag string
 }
 
@@ -281,58 +294,74 @@ func (ctx *Ctx) Tag(tag string) *Ctx {
 	return ctx
 }
 
+func (ctx *Ctx) Fields(data interface{}) *Ctx {
+	ctx.data = data
+	return ctx
+}
+
 // Free 释放
 func (ctx *Ctx) Free() {
+	ctx.data = nil
 	ctxPool.Put(ctx)
 }
 
 func (ctx *Ctx) Debug(s ...interface{}) *Ctx {
-	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprint(s...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 func (ctx *Ctx) Info(s ...interface{}) *Ctx {
-	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprint(s...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 func (ctx *Ctx) Warn(s ...interface{}) *Ctx {
-	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprint(s...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 func (ctx *Ctx) Error(s ...interface{}) *Ctx {
-	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprint(s...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 func (ctx *Ctx) Fatal(s ...interface{}) *Ctx {
-	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprint(s...))
+	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprint(s...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 //
 func (ctx *Ctx) Debugf(s string, args ...interface{}) *Ctx {
-	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprintf(s, args...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 func (ctx *Ctx) Infof(s string, args ...interface{}) *Ctx {
-	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	ctx.o.Output(2, INFO, ctx.tag, ctx.id, fmt.Sprintf(s, args...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 func (ctx *Ctx) Warnf(s string, args ...interface{}) *Ctx {
-	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	ctx.o.Output(2, WARN, ctx.tag, ctx.id, fmt.Sprintf(s, args...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 func (ctx *Ctx) Errorf(s string, args ...interface{}) *Ctx {
-	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	ctx.o.Output(2, ERROR, ctx.tag, ctx.id, fmt.Sprintf(s, args...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
 
 func (ctx *Ctx) Fatalf(s string, args ...interface{}) *Ctx {
-	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprintf(s, args...))
+	ctx.o.Output(2, FATAL, ctx.tag, ctx.id, fmt.Sprintf(s, args...), ctx.data)
+	ctx.data = nil
 	return ctx
 }
