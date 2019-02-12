@@ -32,12 +32,6 @@ func main(){
 
 ```
 
-显示结果
-
-```
-2017-12-22 13:21:43 [INFO] main:13 → user:xxx,pwd:xxx
-2017-12-22 13:21:43 [ERRO] main:14 → pwd is error
-```
 
 
 ## 输出到多个输出源
