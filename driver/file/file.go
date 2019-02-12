@@ -1,6 +1,7 @@
 package file
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,6 +31,8 @@ type Option struct {
 	// 单个日志文件的最大大小 单位MB
 	// 默认不限制 当单个文件不限制的情况下 MaxFileCount无效 因为永远不会分割
 	MaxFileSize uint64
+	// 是否使用json格式输出
+	UseJSON bool
 }
 
 func New(opt *Option) (*LogFile, error) {
@@ -64,6 +67,10 @@ func (f *LogFile) Write(data []byte) (int, error) {
 }
 
 func (f *LogFile) Format(ev *log.Event) []byte {
+	if f.option.UseJSON {
+		b, _ := json.MarshalIndent(ev, "", "	")
+		return b
+	}
 	return log.FormatPattern(ev)
 }
 

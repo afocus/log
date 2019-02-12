@@ -37,17 +37,17 @@ const (
 func (l Level) String() string {
 	switch l {
 	case DEBUG:
-		return "DBUG"
+		return "debug"
 	case INFO:
-		return "INFO"
+		return "info"
 	case WARN:
-		return "WARN"
+		return "warn"
 	case ERROR:
-		return "ERRO"
+		return "error"
 	case FATAL:
-		return "FATA"
+		return "fatal"
 	default:
-		return "UNKN"
+		return "debug"
 	}
 }
 
@@ -95,7 +95,7 @@ type FormatWriter interface {
 // Event 日志事件 记录了日志的必要信息
 // 可以通过Formater接口输入格式化样式后的数据
 type Event struct {
-	SrvName string `json:"srvname"`
+	SrvName string `json:"service"`
 	// 日志产生时的时间
 	Timestamp string `json:"timestamp"`
 	// 日志等级
@@ -105,7 +105,7 @@ type Event struct {
 	File string `json:"file,omitempty"`
 	// 日志id 只有Ctx方式才会使用
 	// 主要用于上下文关联
-	ID string `json:"logid,omitempty"`
+	ID string `json:"guid,omitempty"`
 	// 日志动作名称 描述干什么的 如 login,callback...
 	Action string `json:"action,omitempty"`
 	// 日志内容
@@ -171,13 +171,23 @@ func (o *Logger) Output(calldept int, level Level, acname, id, msg string, data 
 	}
 
 	if level == FATAL {
+		stacks := make([]string, 0)
 		// 追加调用堆栈
 		for i := calldept; i < calldept+5; i++ {
 			_, file, line, ok := runtime.Caller(i)
 			if !ok {
 				break
 			}
-			msg += fmt.Sprintf("\n%s:%d", file, line)
+			stacks = append(stacks, fmt.Sprintf("%s:%d", file, line))
+			//msg += fmt.Sprintf("\n%s:%d", file, line)
+		}
+		if data == nil {
+			data = stacks
+		} else {
+			data = map[string]interface{}{
+				"data":       data,
+				"callStacks": stacks,
+			}
 		}
 	}
 
