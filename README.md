@@ -82,19 +82,16 @@ func main(){
     gx := g.Ctx("000000001").Tag("login")
     gx.Info("user:xxx,pwd:xxx")
     gx.Error("pwd is error")
+    // 添加标签
     gx.Tag("newtag").Warn("dang")
+    // 添加附加字段信息
+    gx.Fields(map[string]interface{}{"name":"afocus"})
     // 用完需要释放
     gx.Free()
 }
 
 ```
 
-显示结果
-
-```
-2017-12-22 13:21:43 [INFO] main:13 login-000000001 → user:xxx,pwd:xxx
-2017-12-22 13:21:43 [ERRO] main:14 login-000000001 → pwd is error
-```
 
 
 ## 输出级别
