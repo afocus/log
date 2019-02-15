@@ -73,7 +73,7 @@ var FormatPattern = func(ev *Event) []byte {
 	}
 	if ev.Data != nil {
 		d = append(d, "fields-> "...)
-		databytes, _ := json.MarshalIndent(ev.Data, "", "  ")
+		databytes, _ := json.Marshal(ev.Data)
 		d = append(d, databytes...)
 		d = append(d, '\n')
 	}
