@@ -68,7 +68,8 @@ func (f *LogFile) Write(data []byte) (int, error) {
 
 func (f *LogFile) Format(ev *log.Event) []byte {
 	if f.option.UseJSON {
-		b, _ := json.MarshalIndent(ev, "", "	")
+		b, _ := json.Marshal(ev)
+		b = append(b, '\n')
 		return b
 	}
 	return log.FormatPattern(ev)
