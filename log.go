@@ -241,6 +241,11 @@ func (o *Logger) Debug(s ...interface{}) {
 	o.Output(2, DEBUG, "", "", fmt.Sprint(s...), nil)
 }
 
+// Print Debug的别名
+func (o *Logger) Print(s ...interface{}) {
+	o.Debug(s...)
+}
+
 func (o *Logger) Info(s ...interface{}) {
 	o.Output(2, INFO, "", "", fmt.Sprint(s...), nil)
 }
