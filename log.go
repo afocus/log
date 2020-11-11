@@ -320,15 +320,15 @@ func (ctx *Ctx) Free() {
 	ctxPool.Put(ctx)
 }
 
+// Print
+func (ctx *Ctx) Print(s ...interface{}) {
+	ctx.Debug(s...)
+}
+
 func (ctx *Ctx) Debug(s ...interface{}) *Ctx {
 	ctx.o.Output(2, DEBUG, ctx.tag, ctx.id, fmt.Sprint(s...), ctx.data)
 	ctx.data = nil
 	return ctx
-}
-
-// Print Debug的别名
-func (ctx *Ctx) Print(s ...interface{}) *Ctx {
-	return ctx.Debug(s...)
 }
 
 func (ctx *Ctx) Info(s ...interface{}) *Ctx {
